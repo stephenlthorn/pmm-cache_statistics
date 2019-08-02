@@ -1,0 +1,34 @@
+mysql_innodb_pages:
+   query: "SELECT CASE WHEN REPLACE(SUBSTRING_INDEX(table_name, '.', - 1), '\\`', '') IS NULL THEN 'mysql_system_tables' ELSE REPLACE(SUBSTRING_INDEX(table_name, '.', - 1), '\\`', '') END  as table_name, CASE WHEN REPLACE(SUBSTRING_INDEX(table_name, '.', + 1), '\\`', '') IS NULL THEN 'mysql_system_schema' ELSE REPLACE(SUBSTRING_INDEX(table_name, '.', + 1), '\\`', '') END as schema_name, index_name as index_name,page_type, count(*)*(select variable_value from performance_schema.global_variables where variable_name  = 'innodb_page_size')/1024 as innodb_page_size from INFORMATION_SCHEMA.INNODB_BUFFER_PAGE group by table_name,index_name,page_type order by schema_name,table_name;"
+   metrics:
+    - table_name:
+        usage: "LABEL"
+        description: "Table name"
+    - page_type:
+        usage: "LABEL"
+        description: "Page Type"
+    - innodb_page_size:
+        usage: "GAUGE"
+        description: "Number of InnoDB Pages"
+    - schema_name:
+        usage: "LABEL"
+        description: "Schema Name"
+    - index_name:
+        usage: "LABEL"
+        description: "Index name"
+
+mysql_innodb_cached_indexes:
+   query: "SELECT SUBSTRING_INDEX(tables.name, '/', +1 ) AS schema_name, SUBSTRING_INDEX(tables.name, '/', -1 ) AS table_name,   indexes.NAME AS index_name,   cached.N_CACHED_PAGES*(select variable_value from performance_schema.global_variables where variable_name  = 'innodb_page_size')/1024 AS innodb_page_size FROM   INFORMATION_SCHEMA.INNODB_CACHED_INDEXES AS cached,   INFORMATION_SCHEMA.INNODB_INDEXES AS indexes,   INFORMATION_SCHEMA.INNODB_TABLES AS tables WHERE   cached.INDEX_ID = indexes.INDEX_ID   AND indexes.TABLE_ID = tables.TABLE_ID;"
+   metrics:
+    - table_name:
+        usage: "LABEL"
+        description: "Table name"
+    - innodb_page_size:
+        usage: "GAUGE"
+        description: "InnoDB Page sizes"
+    - schema_name:
+        usage: "LABEL"
+        description: "Schema Name"
+    - index_name:
+        usage: "LABEL"
+        description: "Index name"
